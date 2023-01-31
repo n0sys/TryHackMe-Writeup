@@ -1,6 +1,6 @@
 # Wonderland Writeup
 <!-- Description -->
-![Wonderland](imgs/machine.png)
+![Wonderland](imgs/machine2.png)
 
 Completed on ??/??/20??
 <!-- /Description -->
