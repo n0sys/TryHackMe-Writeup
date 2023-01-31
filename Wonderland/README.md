@@ -1,6 +1,7 @@
 # Wonderland Writeup
 <!-- Description -->
 ![Wonderland](imgs/machine.png)
+
 Completed on ??/??/20??
 <!-- /Description -->
 ## Table of Contents
@@ -39,7 +40,9 @@ PORT   STATE SERVICE VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 As the port 80 is open, I decided to check the website myself.
+
 ![Wonderland](imgs/website.png)
+
 The page source reveals nothing and checking common file names and directories returned nothing. So I decided to continue with a nikto scan and some directory fuzzing with ffuf.
 #### Nikto Scan
 ```bash
@@ -103,7 +106,9 @@ Keep Going.
 "That depends a good deal on where you want to get to," said the Cat.
 ```
 /r/a/a gave no results while /r/a/b was successful. It seems like the story is playing out within the subdirectories. You can notice as well that /r/a/b kinda build up to the word "rabbit" which was a title in the root directory page. And eventually, visiting /r/a/b/b/i/t returns a hint.
+
 ![Wonderland](imgs/door.png)
+
 So Alice must now open the door to enter wonderland. In the page source, you find as well what looks like credentials
 ```
 alice:HowDothTheLittleCrocodileImproveHisShiningTail
