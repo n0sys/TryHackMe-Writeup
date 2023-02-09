@@ -179,7 +179,7 @@ for i in range(10):
     line = random.choice(poem.split("\n"))
     print("The line was:\t", line)
 ```
-Is it possible for us to mess up with the execution of this script? Well, one thing we can notice is that the path to import the random library is not specified. So if we were to create the file "random.py" and execute the script from the same directory, python would prioritize this file over the "random.py" in the PYTHONPATH. We created random.py in a way that when called, would spawn for us a shell.
+Is it possible for us to mess up with the execution of this script? Well, one thing we can notice is that the path to import the random library is not specified. So if we were to create the file "random.py" in the directory where the script is then execute it, python would prioritize this file over the "random.py" in the PYTHONPATH. We created random.py in a way that when called, would spawn for us a shell.
 ```python3
 import pty
 def choice(idontcare):
