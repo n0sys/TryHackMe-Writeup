@@ -198,7 +198,23 @@ $ whoami
 rabbit
 ```
 #### The Decoy
-Binary file in /home/rabbit
+After getting a shell as the new user, we start searching around to see what's available for us. After visiting "/home/rabbit", we find an executable file called "teaParty". We try running the file and we get the following output
+
+![Wonderland](imgs/teaPartyoutput.png)
+
+The script waits for us aswell to send some input in STDIN. After typing a random anything we get an error
+
+![Wonderland](imgs/teaPartyerror.png)
+
+This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing we could do was to send the file to our machine and try and examine it locally (Even though it would be really hard to exploit the buffer overflow without a disassembler but maybe we could find something hidden in the file). After sending the file, we start by examining it:
+
+![Wonderland](imgs/teaPartyreadelf.png)
+
+So its a x64 ELF. Even though I hadn't wroked with other than x86 executables I wanted to give it a try. So let's disassemble it with gdb:
+
+![Wonderland](imgs/teaPartydisassembled.png)
+
+First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for out input in any critical register.  
 
 ---
 ### Post Exploitation
