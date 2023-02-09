@@ -152,6 +152,8 @@ $ ls /home
 alice  hatter  rabbit  tryhackme
 ```
 
+---
+### Exploitation
 #### Sudoers 
 One thing I always check when I get access to a new machine, is the command "sudo -l" since its really easy for the admin to mess up with it and allow us to get access to things we shouldn't. Lucky for me this was the case.
 ```bash
@@ -195,8 +197,8 @@ and we got ourselves a shell as the user "rabbit"!
 $ whoami
 rabbit
 ```
----
-### Exploitation
+#### The trick
+
 ---
 ### Post Exploitation
 ---
