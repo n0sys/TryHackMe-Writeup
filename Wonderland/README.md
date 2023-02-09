@@ -197,7 +197,8 @@ and we got ourselves a shell as the user "rabbit"!
 $ whoami
 rabbit
 ```
-#### The trick
+#### The Decoy
+Binary file in /home/rabbit
 
 ---
 ### Post Exploitation
