@@ -2,7 +2,7 @@
 <!-- Description -->
 ![Wonderland](imgs/machine2.png)
 Wonderland is a free access machine on TryHackMe with a difficulity level of Medium. 
-We start the machine, get an IP address and start our attack (Ofcourse after connecting
+We start the machine, get an IP address and start our attack (ofcourse after connecting
 to the TryHackMe network with openvpn).
 
 Completed on 10/02/2023
@@ -97,7 +97,7 @@ index.html              [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 259
 img                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 188ms]
 r                       [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 157ms]
 ```
-The directory fuzzing was successful and we find a way to keep going. Upon visiting /r we got the following
+The directory fuzzing was successful and we find a way to continue. Upon visiting /r we got the following
 ```
 Keep Going.
 "Would you tell me, please, which way I ought to go from here?"
@@ -107,7 +107,7 @@ The /r was kinda odd as a directory name, so I tried /r/a and got a result as we
 Keep Going.
 "That depends a good deal on where you want to get to," said the Cat.
 ```
-/r/a/a gave no results while /r/a/b was successful. It seems like the story is playing out within the subdirectories. You can notice as well that /r/a/b kinda build up to the word "rabbit" which was a title in the root directory page. And eventually, visiting /r/a/b/b/i/t returns a hint.
+/r/a/a gave no results while /r/a/b was successful. It seems like the story is playing out within the subdirectories. You can notice as well that /r/a/b kinda build up to the word "rabbit" which was the title in the root directory page. And eventually, visiting /r/a/b/b/i/t returns a hint.
 
 ![Wonderland](imgs/door.png)
 
@@ -115,7 +115,7 @@ So Alice must now open the door to enter wonderland. In the page source, you fin
 ```
 alice:HowDothTheLittleCrocodileImproveHisShiningTail
 ```
-After doing some directory fuzzing and getting no results, I decided to search elsewhere. The final page found mentions a door to access wonderland which could mean the machine and a way to access remote machines is SSH! Using the found credentials we successfuly login to the machine.
+After doing some directory fuzzing and getting no results, I decided to search elsewhere. The final page I found, mentions a door to access wonderland which could mean the machine and a way to access remote machines is SSH! Using the found credentials we successfuly login to the machine as Alice.
 ```bash
 $ ssh alice@$IP
 Last login: Mon May 25 16:37:21 2020 from 192.168.170.1
