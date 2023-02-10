@@ -332,6 +332,24 @@ hatter@wonderland:~$ perl -e 'use POSIX (setuid); POSIX::setuid(0); exec "/bin/b
 root@wonderland:~# whoami
 root
 ```
+### Conclusion
+Just wanted to share this :D
+```bash   
+root@wonderland:/home/root$ exit 
+exit
+hatter@wonderland:/home/hatter$ exit                                                                                
+exit                                                                                                                
+Fri Feb 10 02:12:46 UTC 2023                                                                                        
+Ask very nicely, and I will give you some tea while you wait for him                                                
+
+Segmentation fault (core dumped)                                                                                     
+rabbit@wonderland:/home/rabbit$ exit
+exit                                                                                                                
+$                                                                                                                   
+$ exit                                                                                                              
+alice@wonderland:~$ exit
+```
+Overall, it was a very instructive and informative challenge :)
 ---
 
 > Any feedback would be appreciated. Thank you !
