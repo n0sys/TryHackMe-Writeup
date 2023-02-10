@@ -1,6 +1,9 @@
 # Wonderland Writeup
 <!-- Description -->
 ![Wonderland](imgs/machine2.png)
+Wonderland is a free access machine on TryHackMe with a difficulity level of Medium. 
+We start the machine, get an IP address and start our attack (Ofcourse after connecting
+to the TryHackMe network with openvpn).
 
 Completed on 10/02/2023
 <!-- /Description -->
