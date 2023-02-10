@@ -360,8 +360,7 @@ Ask very nicely, and I will give you some tea while you wait for him
 
 Segmentation fault (core dumped)                                                                                     
 rabbit@wonderland:/home/rabbit$ exit
-exit                                                                                                                
-$                                                                                                                   
+exit                                                                                                                                                                                                                                 
 $ exit                                                                                                              
 alice@wonderland:~$ exit
 ```
