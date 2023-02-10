@@ -182,7 +182,9 @@ for i in range(10):
     line = random.choice(poem.split("\n"))
     print("The line was:\t", line)
 ```
-Is it possible for us to mess up with the execution of this script? Well, one thing we can notice is that the path to import the random library is not specified. So if we were to create the file "random.py" in the directory where the script is then execute it, python would prioritize this file over the "random.py" in the PYTHONPATH. We created random.py in a way that when called, would spawn for us a shell.
+Is it possible for us to mess up with the execution of this script? Well, one thing we can notice is that the path to import the random library is not specified. So if we were to create the file "random.py" in the directory where the script is then execute it, python would prioritize this file over the "random.py" in the PYTHONPATH. 
+
+I created random.py in a way that when called, would spawn for us a shell as follows
 ```python3
 import pty
 def choice(idontcare):
@@ -203,11 +205,13 @@ After getting a shell as the new user, we start searching around to see what's a
 
 ![Wonderland](imgs/teaPartyoutput.png)
 
-The script waits for us aswell to send some input in STDIN. After typing a random anything we get an error
+The script waits for us aswell to send some input in STDIN. After typing anything we get an error
 
 ![Wonderland](imgs/teaPartyerror.png)
 
-This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing I could do was to send the file to my machine and try and examine it locally (even though it would be really hard to exploit the buffer overflow without a disassembler but perhaps I could find something hidden in the file). After sending the file, I started by checking the executable's headers:
+This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing I could do was to send the file to my machine and try and examine it locally (even though it would be really hard to exploit the buffer overflow without a disassembler but perhaps I could find something hidden in the file). 
+
+After sending the file, I started by checking the executable's headers:
 
 ```bash
 $ readelf -h teaParty
@@ -252,7 +256,9 @@ Segmentation fault (core dumped)
 
 Breakpoint 2, 0x00005555555551c2 in main ()
 ```
-So afterall, the "Segmentation fault" error was just printed out and not really the result of an error. How silly.. Okay so at this point I decided to abandon the file and search elsewhere on the machine. After searching for a while and finding nothing, I returned to this file which was the only lead i had to continue. After re-examining it with gdb, I noticed something a message printed out during execution that I hadn't focused on before.
+So afterall, the "Segmentation fault" error was just printed out and not really the result of an error. How silly.. 
+
+Okay so at this point I decided to abandon the file and search elsewhere on the machine. After searching for a while and finding nothing, I eventually returned to the file which was the only lead i had to continue. After re-examining it with gdb, I noticed a message that was printed out during the execution that I hadn't focused on before.
 ```
 (gdb) r
 Starting program: /home/kali/thm/wonderland/teaParty 
@@ -262,7 +268,9 @@ Welcome to the tea party!
 The Mad Hatter will be here soon.
 [Detaching after vfork from child process 38426]
 ```
-Our program is creating a child process. So what other thing is actually being executed here? After searching around about it, I found that its possible to follow and catch the child process with gdb. First we break at the instruction which is executing the child process (which is instruction system at <+43>) and right after it. After reaching the first one, we write in gdb the following command, then we continue
+Our program is creating a child process. So what other thing is actually being executed here? After searching around about it, I found that its possible to follow and catch the child process with GDB. 
+
+First we break the instruction which is executing the child process (which is instruction 'system' at <+43>) and break aswell the instruction right after it. After reaching the first break, we write in gdb the following command and we continue
 ```
 set follow-fork-mode child
 (gdb) c
@@ -322,8 +330,8 @@ After running the command, we get permission denied error. Weird. We run "id"
 hatter@wonderland:/home/hatter$ id
 uid=1003(hatter) gid=1002(rabbit) groups=1002(rabbit)
 ```
-The previous script which spawned a shell for us as hatter had set our groupid to "1002" which means we cant run just yet perl.
-After checking hatter's home directory, we find a file "password.txt". Using this file we are able to relog in properly as hatter with
+The previous script which spawned a shell for us as hatter had set our gid to "1002" which means we cant just yet run perl.
+After checking hatter's home directory, we find a file "password.txt". Using this file we are able to relog in properly as Hatter.
 ```bash 
 hatter@wonderland:/home/hatter$ su hatter
 Password: 
@@ -354,6 +362,7 @@ $ exit
 alice@wonderland:~$ exit
 ```
 Overall, it was a very instructive and informative challenge :)
+
 ---
 
 > Any feedback would be appreciated. Thank you !
