@@ -115,7 +115,7 @@ Keep Going.
 
 So Alice must now open the door to enter wonderland. In the page source, you find as well what looks like credentials
 ```
-alice:HowDothTheLittleCrocodileImproveHisShiningTail
+alice:*********************************************
 ```
 After doing some directory fuzzing and getting no results, I decided to search elsewhere. The final page I found, mentions a door to access wonderland which could mean the machine and a way to access remote machines is SSH! Using the found credentials we successfuly login to the machine as Alice.
 ```bash
@@ -352,7 +352,7 @@ root
 ```
 ### Conclusion
 Just wanted to share this :D
-```bash   
+```  
 root@wonderland:/home/root$ exit 
 exit
 hatter@wonderland:/home/hatter$ exit                                                                                
