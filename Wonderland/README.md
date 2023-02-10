@@ -25,7 +25,7 @@ Completed on 10/02/2023
 ## Let's Get Going
 ### Nmap Scan
 We start as usual with the nmap scan
-```bash
+```
 $ nmap -sC -sV -oN nmap/initial $IP     
 Starting Nmap 7.93 ( https://nmap.org ) at 2023-01-30 16:10 EST
 Nmap scan report for 10.10.138.169
@@ -47,7 +47,7 @@ As the port 80 is open, I decided to check the website myself.
 
 The page source reveals nothing and checking common file names and directories returned nothing. So I decided to continue with a nikto scan and some directory fuzzing with ffuf.
 ### Nikto Scan
-```bash
+```
 $ nikto -h http://$IP              
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ $ nikto -h http://$IP
 ```
 The nikto scan returned no results.
 ### Directory Fuzzing
-```bash
+```
 $ ffuf -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -u http://$IP/FUZZ -e ".php,.html"      
 
         /'___\  /'___\           /'___\       
@@ -209,7 +209,9 @@ The script waits for us aswell to send some input in STDIN. After typing anythin
 
 ![Wonderland](imgs/teaPartyerror.png)
 
-This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing I could do was to send the file to my machine and try and examine it locally (even though it would be really hard to exploit the buffer overflow without a disassembler but perhaps I could find something hidden in the file). 
+This surely looks like a buffer overflow vulnerability! The executable has the SUID bit set as well which means that a successful exploitation could grant us root access. 
+
+To continue we try and check if gdb is installed which was not the case. "readelf" tool which shows info about the executable was not installed either. Only thing I could do was to send the file to my machine and try and examine it locally (even though it would be really hard to exploit the buffer overflow without a disassembler but perhaps I could find something hidden in the file). 
 
 After sending the file, I started by checking the executable's headers:
 
@@ -241,7 +243,9 @@ So its an ELF x64 executable. Even though I hadn't wroked with anything other th
 
 ![Wonderland](imgs/teaPartydisassembled.png)
 
-First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from our input, I found nothing in particular. No trace for our input in any critical register. Where's this "Segmentation fault" error coming from? I decided to break each "puts" instruction to see what it outputs (puts is used to write strings to stdout). After reaching the final puts I got the following:
+First thing that stood out to me was that there's no testing instructions (neither cmp nor test) so assuming that the file would print out something if our input was correct, is wrong. 
+
+So what is this file really doing..? After putting in some breaks and checking the registers to see where the memory corruption was happening from the input, I found nothing in particular. No trace for our input in any critical register. Where's this "Segmentation fault" error coming from? I decided to break each "puts" instruction to see what it outputs (which is used to write strings to stdout). After reaching the final puts I got the following:
 ```
 (gdb) b *0x00005555555551bd
 Breakpoint 1 at 0x5555555551bd
