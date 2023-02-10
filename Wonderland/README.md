@@ -127,7 +127,7 @@ Executed some commands to gather info about the machine
 $ uname -a
 Linux wonderland 4.15.0-101-generic #102-Ubuntu SMP Mon May 11 10:07:26 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 ```
-(Not that old linux kernel version)
+Kinda old linux kernel version
 ```bash
 $ sudo --version
 Sudo version 1.8.21p2
@@ -139,7 +139,7 @@ $ cat /etc/*release
 DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=18.04
 ```
-(Same for the Ubuntu version)
+Ubuntu release old aswell but not known to have critical vulnerabilities
 ```bash
 $ cat /etc/passwd
 root:x:0:0:root:/root:/bin/bash
@@ -153,6 +153,7 @@ rabbit:x:1002:1002:White Rabbit,,,:/home/rabbit:/bin/bash
 $ ls /home
 alice  hatter  rabbit  tryhackme
 ```
+So the machine has 3 users in total (other than tryhackme).
 
 ### Sudoers 
 One thing I always check when I get access to a new machine, is the command "sudo -l" since its really easy for the admin to mess up with it and allow us to get access to things we shouldn't. Lucky for me this was the case.
