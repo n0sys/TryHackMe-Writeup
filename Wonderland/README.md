@@ -128,7 +128,7 @@ $ uname -a
 Linux wonderland 4.15.0-101-generic #102-Ubuntu SMP Mon May 11 10:07:26 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 ```
 Kinda old linux kernel version
-```bash
+```
 $ sudo --version
 Sudo version 1.8.21p2
 Sudoers policy plugin version 1.8.21p2
@@ -140,7 +140,7 @@ DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=18.04
 ```
 Ubuntu release old aswell but not known to have critical vulnerabilities
-```bash
+```
 $ cat /etc/passwd
 root:x:0:0:root:/root:/bin/bash
 ...
@@ -157,7 +157,7 @@ So the machine has 3 users in total (other than tryhackme).
 
 ### Sudoers 
 One thing I always check when I get access to a new machine, is the command "sudo -l" since its really easy for the admin to mess up with it and allow us to get access to things we shouldn't. Lucky for me this was the case.
-```bash
+```
 $ sudo -l
 Matching Defaults entries for alice on wonderland:
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
@@ -215,7 +215,7 @@ To continue we try and check if gdb is installed which was not the case. "readel
 
 After sending the file, I started by checking the executable's headers:
 
-```bash
+```
 $ readelf -h teaParty
 ELF Header:
   Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
@@ -287,7 +287,7 @@ Thread 2.1 "sh" received signal SIGSEGV, Segmentation fault.
 
 ```
 So the program created a new process with PID 41543. We check it with the "ps" command:
-```bash
+```
 $ ps -auxw | grep '41543'
 kali       41543  0.0  0.0   2524   400 pts/3    t    20:19   0:00 sh -c /bin/echo -n 'Probably by ' && date --date='next hour' -R
 ```
@@ -314,7 +314,7 @@ The shell command executed by the ELF calls the command "date" without specifyin
 
 ### Root we get
 Since we got access to every normal account on the machine, there was nothing left for us but to get root, which will secure for us the flags. After going through the usual privilege escalation checklist I found something interesting in capabilities
-```bash
+```
 $ getcap -r / 2>/dev/null
 /usr/bin/perl5.26.1 = cap_setuid+ep
 /usr/bin/mtr-packet = cap_net_raw+ep
