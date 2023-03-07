@@ -1,0 +1,8 @@
+# private notes
+priv/
+
+# archive
+archive/
+
+# openvpn file
+*.ovpn 
